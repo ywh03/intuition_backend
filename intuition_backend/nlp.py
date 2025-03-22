@@ -4,23 +4,22 @@ import datetime
 import asyncio
 from telegram import Bot
 
-# === ALERT SETTINGS ===
+
 ALERT_DAY_THRESHOLD = 1
 ALERT_SECONDS_THRESHOLD = 600
 ALERT_CONSECUTIVE_NEGATIVE_MSGS = 3
 ALERT_DAY_NEGATIVE_MSGS = 5
 NEGATIVE_SENTIMENT_THRESHOLD = 0.75
 
-# === TELEGRAM CONFIG ===
+
 BOT_TOKEN = "7798861328:AAETIEAFEvZclvvYbvEP3WC7y5HVkgKaolQ"
 MANAGER_CHAT_ID = "557506446"
-MANAGER_MAP = {
-    "emp001": 123456789,   # employee_id → manager chat_id
+MANAGER_MAP = { # Example employees
+    "emp001": 123456789,
     "emp002": 987654321,
-    # Add more mappings here
 }
 
-# === SEND TELEGRAM ALERT ===
+
 async def send_alert_to_manager(manager_chat_id, employee_id):
     bot = Bot(token=BOT_TOKEN)
     await bot.send_message(
@@ -29,7 +28,7 @@ async def send_alert_to_manager(manager_chat_id, employee_id):
         parse_mode='Markdown'
     )
 
-# === SENTIMENT TRACKER PER USER ===
+
 class SentimentTracker:
     def __init__(self):
         self.sentiments = deque(maxlen=20)
@@ -52,14 +51,14 @@ class SentimentTracker:
         else:
             return "NO_ACTION"
 
-# === SENTIMENT ANALYZER ===
+
 class SentimentAnalyzer:
     def __init__(self):
         self.pipeline = pipeline(
             'sentiment-analysis',
             model="cardiffnlp/twitter-roberta-base-sentiment-latest",
             top_k=None,
-            device="mps"  # CPU. Use 0 for GPU or "mps" on Mac.
+            device="mps"
         )
 
     def get_sentiment(self, msg):
@@ -69,7 +68,7 @@ class SentimentAnalyzer:
                 return item['score']
         return 0.0
 
-# === MAIN LOOP ===
+
 analyzer = SentimentAnalyzer()
 employee_trackers = defaultdict(SentimentTracker)
 

@@ -1,0 +1,14 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: url('intuition_submission/intuition_frontend/src/background.jpg') no-repeat center center fixed;
+    background-size: cover;
+    font-family: Arial, sans-serif;
+  }
+  
+  h1 {
+    color: white;
+    text-align: center;
+    padding-top: 100px; /* some space from the top */
+  }
+  

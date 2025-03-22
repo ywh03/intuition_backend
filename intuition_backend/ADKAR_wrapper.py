@@ -1,12 +1,6 @@
-import bs4
-import os
-from langchain import hub
-from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.documents import Document
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langgraph.graph import START, StateGraph
 from typing_extensions import List, TypedDict
-from langchain_huggingface import HuggingFaceEndpoint
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.prompts import PromptTemplate
@@ -35,14 +29,12 @@ Answer:
 """)
 
 
-# Define state for application
 class State(TypedDict):
     question: str
     context: List[Document]
     answer: str
 
 
-# Define application steps
 def retrieve(state: State):
     retrieved_docs = vector_store.similarity_search(state["question"], k=5)
     return {"context": retrieved_docs}
@@ -55,7 +47,6 @@ def generate(state: State):
     return {"answer": response}
 
 
-# Compile application and test
 graph_builder = StateGraph(State).add_sequence([retrieve, generate])
 graph_builder.add_edge(START, "retrieve")
 graph = graph_builder.compile()

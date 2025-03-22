@@ -1,4 +1,3 @@
-import os
 from langchain_core.documents import Document
 from langgraph.graph import START, StateGraph
 from typing_extensions import List, TypedDict
@@ -37,7 +36,6 @@ class State(TypedDict):
     answer: str
 
 
-# Define application steps
 def retrieve(state: State):
     retrieved_docs = vector_store.similarity_search(state["question"], k=5)
     return {"context": retrieved_docs}
@@ -50,7 +48,6 @@ def generate(state: State):
     return {"answer": response}
 
 
-# Compile application and test
 graph_builder = StateGraph(State).add_sequence([retrieve, generate])
 graph_builder.add_edge(START, "retrieve")
 graph = graph_builder.compile()

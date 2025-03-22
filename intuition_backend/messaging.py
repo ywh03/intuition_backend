@@ -5,14 +5,13 @@ from telegram import Bot, Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 from apscheduler.schedulers.background import BackgroundScheduler
 
-# === CONFIGURATION ===
+
 BOT_TOKEN = "7798861328:AAETIEAFEvZclvvYbvEP3WC7y5HVkgKaolQ"  # <-- 🔴 Replace with your actual token
 USERS_FILE = "users.json"
-FEEDBACK_FILE = "team_feedback.json"
 bot = Bot(token=BOT_TOKEN)
 scheduler = BackgroundScheduler()
 
-# === PROMPT DEFINITIONS ===
+
 PROMPTS = {
     "awareness": "📢 *Awareness Phase*: Remind your team *why* this change matters. Connect it to their daily challenges.",
     "adoption": "🛠️ *Adoption Phase*: Help your team take their first steps. Normalize the learning curve. Offer support.",
@@ -21,7 +20,7 @@ PROMPTS = {
     "default": "ℹ️ Default update: Keep supporting your team through this change!"
 }
 
-# === UTILITIES: Load / Save ===
+
 def load_users():
     if os.path.exists(USERS_FILE):
         with open(USERS_FILE, "r") as f:
@@ -29,16 +28,17 @@ def load_users():
     else:
         users = []
 
-    # Ensure all users have required fields
     for user in users:
         user.setdefault("update_score", 0)
         user.setdefault("phase", "awareness")
         user.setdefault("team_id", f"team_{user['chat_id']}")
     return users
 
+
 def save_users(users):
     with open(USERS_FILE, "w") as f:
         json.dump(users, f, indent=2)
+
 
 def save_user(chat_id, username, first_name):
     users = load_users()
@@ -53,11 +53,13 @@ def save_user(chat_id, username, first_name):
         })
         save_users(users)
 
+
 def load_feedback():
     if os.path.exists(FEEDBACK_FILE):
         with open(FEEDBACK_FILE, "r") as f:
             return json.load(f)
     return {}
+
 
 def calculate_score(sentiment_list):
     score = 0
@@ -68,7 +70,8 @@ def calculate_score(sentiment_list):
             score -= 2
     return score
 
-# === ASYNC SCHEDULED PROMPT JOB ===
+
+
 async def update_scores_and_send_prompts():
     users = load_users()
     feedback = load_feedback()
@@ -89,10 +92,11 @@ async def update_scores_and_send_prompts():
     with open(FEEDBACK_FILE, "w") as f:
         json.dump({}, f)
 
+
 def scheduled_job():
     asyncio.run(update_scores_and_send_prompts())
 
-# === TELEGRAM COMMAND HANDLERS ===
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     username = update.effective_user.username
@@ -105,6 +109,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Use /setphase to change it, or /prompt to get your current tip.",
         parse_mode='Markdown'
     )
+
 
 async def prompt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
@@ -120,6 +125,7 @@ async def prompt(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
     await update.message.reply_text("❌ You are not registered. Use /start to subscribe.")
+
 
 async def setphase(update: Update, context: ContextTypes.DEFAULT_TYPE):
     valid_phases = ["awareness", "adoption", "momentum", "sustain"]
@@ -145,7 +151,7 @@ async def setphase(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
     await update.message.reply_text("❌ You are not registered. Use /start to subscribe.")
 
-# === MAIN BOT LAUNCH ===
+
 if __name__ == "__main__":
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
