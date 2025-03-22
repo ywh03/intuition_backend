@@ -1,4 +1,4 @@
-# Resonating Solutions
+# REsonating Solutions
 
 A change management platform empowering organizations to accelerate AI adoption with empathy, intelligence, and trust.
 
