@@ -9,13 +9,17 @@ from langchain.chat_models import init_chat_model
 llm = init_chat_model("gpt-4o-mini",model_provider="openai")
 
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-vector_store = FAISS.load_local("lewins_faiss_index", embeddings, allow_dangerous_deserialization=True)
+vector_store = FAISS.load_local("framework_decider_index", embeddings, allow_dangerous_deserialization=True)
 print("Total vectors:", vector_store.index.ntotal)
 prompt = PromptTemplate.from_template("""
-You are supposed to use a requested management model to solve a problem using Lewin's model.  Using the following knowledge of each step in the model, recommend a comprehensive solution and spell out each step. 
-If unsure, reply "I don't know".
+You are supposed to choose a management change framework based on the given prompt.  Make your decision based on the research given. 
+If unsure, just pick an optimal one.
 
-Context:
+Firstly, return a one word answer of either 'ADKAR' or 'Lewin'.
+
+Then justify why. 
+
+Research:
 {context}
 
 Question:
@@ -43,10 +47,15 @@ def generate(state: State):
     return {"answer": response}
 
 
-graph_builder = StateGraph(State).add_sequence([retrieve, generate])
-graph_builder.add_edge(START, "retrieve")
-graph = graph_builder.compile()
+def gen_response(question):
+    graph_builder = StateGraph(State).add_sequence([retrieve, generate])
+    graph_builder.add_edge(START, "retrieve")
+    graph = graph_builder.compile()
 
-def gen_response_lewin(question):
     response = graph.invoke({"question": question})
-    return response["answer"].content
+    parts = response["answer"].content.split("Justification:")
+
+    answer = parts[0].replace("Answer:", "").strip()
+    justification = parts[1].strip()
+
+    return {'answer': answer, 'justification': justification}
