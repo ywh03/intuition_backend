@@ -17,12 +17,12 @@ function ChatbotInterface() {
     "Prosci"
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
-    const newMessage = { sender: 'user', text: inputValue.trim() };
-    setMessages((prev) => [...prev, newMessage]);
+    const userMessage = { sender: 'user', text: inputValue.trim() };
+    setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
 
     if (messages.length === 1) {
@@ -32,21 +32,50 @@ function ChatbotInterface() {
     const typingMessage = { sender: 'bot', text: '...' };
     setMessages((prev) => [...prev, typingMessage]);
 
-    setTimeout(() => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 40000); // 40 seconds
+
+    try {
+      const response = await fetch("http://localhost:8000/decide-framework", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question: inputValue.trim() }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+      const data = await response.json();
+
       setMessages((prev) => {
         const updated = [...prev];
         const lastIndex = updated.length - 1;
         if (updated[lastIndex]?.text === '...') {
           updated.splice(lastIndex, 1);
         }
-        return updated;
+
+        return [
+          ...updated,
+          {
+            sender: 'bot',
+            text: `💡 *Recommended Model:* ${data.model}\n\n*Answer:* ${data.answer}\n\n*Why:* ${data.justification}`,
+          },
+        ];
       });
-      const botResponse = {
-        sender: 'bot',
-        text: `Using ${selectedFramework}, here's my reply to "${newMessage.text}"`,
-      };
-      setMessages((prev) => [...prev, botResponse]);
-    }, 2000);
+
+    } catch (error) {
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated.pop();
+        return [
+          ...updated,
+          { sender: 'bot', text: error.name === "AbortError" ? 'Request timed out after 40 seconds.' : 'Failed to get response.' },
+        ];
+      });
+    }
   };
 
   const handleExit = () => {
